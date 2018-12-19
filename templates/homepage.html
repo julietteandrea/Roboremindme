@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<form action="/sms" method="POST">
+		Enter the phone number you would like to send a roboreminder to:
+	<input type="tel" id="phone" name="phone" required><br>
+	<span class="note">Format: E.164 format (example: +17185551234)</span>
+	<br>
+	<br>
+	
+	Enter the time and date when to send the roboreminder:<br>
+	If right away, check the box:
+	 <input type="checkbox" name="textrn" value="textrn"> Send immediately
+	<br> 
+	Otherwise, Enter the date and time below:<br>
+	<!-- min should be day before current date -->
+	<input type="date" name="textdate" max="2019-12-31" min="2018-12-06">
+	<!-- min must be 1 min before current time -->
+	<input type="time" id="texttime" name="texttime"><br>
+	Enter the reminder:<br>
+	<textarea rows="4" cols="50" name="reminder"></textarea><br>
+	<input type="submit">	
+	</form>
+
+<body></body>
+</html>

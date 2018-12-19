@@ -14,3 +14,8 @@ message = client.messages \
 					to = recipient("recipient_num")
 					)
 print(message.sid)
+print(message.body)
+print(message.date_created)
+print(message.status)
+print(message.to)
+print(message.uri)
