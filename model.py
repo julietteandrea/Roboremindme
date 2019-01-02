@@ -13,14 +13,20 @@ class User(db.Model):
 
 	user_id = db.Column(db.Integer, autocrement=True, primary_key=True)
 	username = db.Column(db.String(25), nullable=False)
-	phone_num = db.Column(db.String(50)) #needs to verify in order to gain full access
+	phone_num = db.Column(db.String(50)) # Needs to verify in order to gain full access
 	password = db.Column(db.String(200), nullable=False)
 
-	#Define relationship to messages
+	# Define relationship to messages
 	messages = db.relationship("")
 
 	def __repr__(self):
 		"""Provide clear representation when printed"""
+
+		return "<User user_id={} username={} phone_num={} password={}>".format(
+																		self.user_id,
+																		self.username,
+																		self.phone_num,
+																		self.password)
 
 class SmsMessages(db.Model):
 	"""Storage of messages and it's details"""
@@ -29,5 +35,40 @@ class SmsMessages(db.Model):
 
 	message_id = db.Column(db.Integer, autocrement=True, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-	recipent = db.Column(db.String(50))
-	
+	recipent = db.Column(db.String(50), nullable=False)
+	date_created = db.Column(db.String(50), nullable=False) # Current date/time of message created
+	date_sent = db.Column(db.String(50), nullable=False) # date/time of when to send message or when message was sent
+	body = db.Column(db.String(65), nullable=False)
+	sid = db.Column(db.String(200))
+
+	def __repre__(self):
+		"""Provide clear representation when printed"""
+
+		return "<SmsMessages message_id={} user_id={} recipent={} date_created={} date_sent={} body={} sid={}>".format(
+																												self.message_id,
+																												self.user_id,
+																												self.recipent,
+																												self.date_created,
+																												self.date_sent,
+																												self.body,
+																												self.sid)
+
+##### Helper Functions #####
+
+def connect_to_db(app):
+	"""Connect the database to our Flask app"""
+
+	# Configure to use our PostgreSQL database
+	app.config['SQLALCHEMY_DATABASE_URI'] = 'postresql:///reminders'
+	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+	app.config['SQLALCHEMY_ECHO'] = True
+	db.app = app
+	db.init_app(app)
+
+if __name__ == "__main__":
+	# If we run this module interactively, it will leave you in 
+	# a state of being able to work with the database directly.
+
+	from robo import app
+	connect_to_db(app)
+	print("Connected to DB") 
