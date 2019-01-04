@@ -11,7 +11,7 @@ class User(db.Model):
 
 	__tablename__ = "users"
 
-	user_id = db.Column(db.Integer, autocrement=True, primary_key=True)
+	user_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 	username = db.Column(db.String(25), nullable=False)
 	phone_num = db.Column(db.String(50)) # Needs to verify in order to gain full access
 	password = db.Column(db.String(200), nullable=False)
@@ -33,7 +33,7 @@ class SmsMessages(db.Model):
 
 	__tablename__ = "messages"
 
-	message_id = db.Column(db.Integer, autocrement=True, primary_key=True)
+	message_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 	recipent = db.Column(db.String(50), nullable=False)
 	date_created = db.Column(db.String(50), nullable=False) # Current date/time of message created
