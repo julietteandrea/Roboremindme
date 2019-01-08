@@ -1,8 +1,8 @@
 from flask import Flask, request, render_template, flash, redirect
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
-import datetime
-from config import *
+from datetime import datetime, timedelta
+from config import *; from config2 import *
 
 app = Flask(__name__)
 
@@ -24,15 +24,14 @@ def index():
 def testing_homepage():
 	text_num = request.form.get("phone")
 	msg = request.form.get("reminder")
-	time = request.form.get("texttime")
-	timezone = request.form.get("timezone")
-	if timezone == "pst":
-		atime = int(time[:2]) + 8
-		send_time = str(atime) + time[2:]
-	elif timezone == "est":
-		atime = int(time[:2]) + 5
-		send_time = str(atime) + time[2:]
-	send_date = request.form.get("textdate")
+	time1 = request.form.get("texttime")
+	time = time1 + ':00'
+	# ampm = request.form.get("ampm")
+	time = convert2_24(time)
+	date = request.form.get("textdate")
+	send_date = date + ' ' + time[0:8]
+	send_date = convertlocal_utc(send_date)
+	
 	sendnow = request.form.get("textrn")
 	if sendnow:
 		message = client.messages \
@@ -54,13 +53,12 @@ def testing_homepage():
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
 					)
 	# save to, time created, time sent, message, sid insiide the database.
-	print("time = {}".format(send_time))
-	print("date = {}".format(send_date))
+	print("time = {} {}".format(time1, time))
+	print("date = {}".format(date))
 	print("message sid = {}".format(message.sid))
 	print("message recipent = {}".format(message.to))
-	print("message created(now it's current date) = {}".format(datetime.datetime.now()))
-	print("message sent date = {}".format(message.date_created))
-	print("message sent = {}".format(message.date_sent))
+	print("message created(now it's current date) = {}".format(datetime.now()))
+	print("message sent date = {}".format(send_date))
 	print("message body = {}".format(message.body))
 
 	return redirect("/sms")
