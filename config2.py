@@ -3,26 +3,28 @@
 
 from datetime import datetime
 from dateutil import tz
+from pytz import timezone
 
 #################### functions #####################
 
-def convertlocal_utc(send_date):
+def convertlocal_utc(send_date, timezone):
 	""" Converts time user inputs to utc."""
 	
 	# Auto-detect zones:
-	from_zone = tz.tzlocal()
+	from_zone = tz.gettz(timezone)
 	to_zone = tz.tzutc()
+	print("from zone = {}".format(from_zone.tzname(datetime.now())))
+	print("to zone = {}".format(to_zone.tzname(datetime.now())))
 
 	# est = datetime.'local'now()
 	est = datetime.strptime(send_date, '%Y-%m-%d %H:%M:%S')
 
 	# Tell datetime object it's in local time zone
 	est = est.replace(tzinfo=from_zone)
-
+	
 	utc_time = est.astimezone(to_zone)
-
-	return utc_time
-
+	print("convert to utcfffffff")
+	return datetime.strftime(utc_time,'%Y-%m-%d %H:%M:%S')
 def convert2_24(time):
 	""" Converts standard time format to 24 hours."""
 	

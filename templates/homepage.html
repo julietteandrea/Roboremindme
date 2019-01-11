@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+{% extends 'base.html' %}
+
+{% block head %}
 <form action="/sms" method="POST">
 		Enter the phone number you would like to send a roboreminder to:
 	<input type="tel" id="phone" name="phone" required><br>
@@ -17,14 +17,24 @@
 	<input type="date" name="textdate" max="2019-12-31" min="2018-12-06">
 	<!-- min must be 1 min before current time -->
 	<input type="time" id="texttime" name="texttime">
-<!-- 	<small><input type="radio" name="ampm" value="AM"> am
-	<input type="radio" name="ampm" value="PM"> pm
-	</small><br> -->
+	<small><select name="timezone">
+		<option value="US/Eastern"> est</option>
+		<option value="US/Pacific"> pst</option>
+		<option value="US/Central"> ct</option>
+		<option value="US/Mountain"> mt</option>
+		<option value="US/Hawaii"> hst</option>
+	</select></small>
+    <br>
 	Enter the reminder:<br>
 	<!--- 65 char limit -->
 	<textarea rows="4" cols="50" name="reminder" required></textarea><br>
 	<input type="submit">	
-</form>
 
-<body></body>
-</html>
+</form>
+{% endblock %}
+
+
+	
+	
+{% block content %}
+{% endblock %}

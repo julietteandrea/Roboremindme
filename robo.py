@@ -20,18 +20,18 @@ def index():
 	return render_template("homepage.html")
 
 # Refactor - Work in Progress...
+# Finding the locale of user and converting time to utc
 @app.route("/sms", methods=["GET", "POST"])
 def testing_homepage():
 	text_num = request.form.get("phone")
 	msg = request.form.get("reminder")
-	time1 = request.form.get("texttime")
-	time = time1 + ':00'
-	# ampm = request.form.get("ampm")
-	time = convert2_24(time)
+	time = request.form.get("texttime")
 	date = request.form.get("textdate")
-	send_date = date + ' ' + time[0:8]
-	send_date = convertlocal_utc(send_date)
-	
+	timezone = request.form.get("timezone")
+	print(timezone)
+	time = time + ':00'
+	send_date = date + " " + time[0:8]
+	send_date = convertlocal_utc(send_date, timezone)
 	sendnow = request.form.get("textrn")
 	if sendnow:
 		message = client.messages \
@@ -53,8 +53,9 @@ def testing_homepage():
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
 					)
 	# save to, time created, time sent, message, sid insiide the database.
-	print("time = {} {}".format(time1, time))
-	print("date = {}".format(date))
+	if time and date:
+		print("time = {}".format(time))
+		print("date = {}".format(date))
 	print("message sid = {}".format(message.sid))
 	print("message recipent = {}".format(message.to))
 	print("message created(now it's current date) = {}".format(datetime.now()))
