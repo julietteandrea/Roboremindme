@@ -28,7 +28,7 @@ def testing_homepage():
 	time = request.form.get("texttime")
 	date = request.form.get("textdate")
 	timezone = request.form.get("timezone")
-	print(timezone)
+	
 	time = time + ':00'
 	send_date = date + " " + time[0:8]
 	send_date = convertlocal_utc(send_date, timezone)
