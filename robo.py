@@ -20,28 +20,30 @@ def index():
 	return render_template("homepage.html")
 
 # Refactor - Work in Progress...
-# Finding the locale of user and converting time to utc
 @app.route("/sms", methods=["GET", "POST"])
 def testing_homepage():
-	text_num = request.form.get("phone")
-	msg = request.form.get("reminder")
-	time = request.form.get("texttime")
-	date = request.form.get("textdate")
-	timezone = request.form.get("timezone")
 	
-	time = time + ':00'
-	send_date = date + " " + time[0:8]
-	send_date = convertlocal_utc(send_date, timezone)
+	# recipent's phone number
+	text_num = request.form.get("phone")
+	
+	# message sent to recipent
+	msg = request.form.get("reminder")
+	# send immediately option
 	sendnow = request.form.get("textrn")
-	if sendnow:
-		message = client.messages \
-				.create(
-					body = msg,
-					from_= twilio("twilio_num"),
-					to = text_num,
-					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
-					)
-	else:
+	# temp flag to print needed info
+	timedate_info = False
+	
+	# if user doesn't check 'send immediately' option
+	if sendnow == None:
+		time_date = True
+		time = request.form.get("texttime")
+		date = request.form.get("textdate")
+		timezone = request.form.get("timezone")
+		# seconds are added to time, for better formatting
+		time = time + ':00'
+		send_date = date + " " + time[0:8]
+		# convert user's local time to utc
+		send_date = convertlocal_utc(send_date, timezone)
 		# Save the message in the db with the time/date(created) and recipent num
 		# Send the message when that time/date matches current t/d
 		# Then save the sid
@@ -52,10 +54,25 @@ def testing_homepage():
 					to = text_num,
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
 					)
+	else:
+		send_date = datetime.now()
+		message = client.messages \
+				.create(
+					body = "msg",
+					from_= twilio("twilio_num"),
+					to = text_num,
+					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
+					)
+
 	# save to, time created, time sent, message, sid insiide the database.
-	if time and date:
+	if timedate_info == True:
 		print("time = {}".format(time))
 		print("date = {}".format(date))
+		print("message sid = {}".format(message.sid))
+		print("message recipent = {}".format(message.to))
+		print("message created(now it's current date) = {}".format(datetime.now()))
+		print("message sent date = {}".format(send_date))
+		print("message body = {}".format(message.body))
 	print("message sid = {}".format(message.sid))
 	print("message recipent = {}".format(message.to))
 	print("message created(now it's current date) = {}".format(datetime.now()))
@@ -85,8 +102,6 @@ def sms_reply():
 		resp.message("Hi!")
 	elif "your name" in body:
 		resp.message("She named me Roboremindme, but you can call me Watson")
-	elif "stop" in body:
-		resp.message("Until next time then. Goodbye!")
 	elif "picture" in body:
 		pic = resp.message("Here's my contact picture. Save it under Roboremindme!")
 		pic.media("https://c1.staticflickr.com/5/4894/31633985757_1886a7bb04_b.jpg")
