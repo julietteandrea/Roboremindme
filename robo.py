@@ -10,7 +10,6 @@ account_sid = account_sid("account_num")
 auth_token = auth_token("token_num")
 
 client = Client(account_sid, auth_token)
-# It's a great thing when you realize you still have the ability to surprise yourself. 
 
 ########### Functions begin ##############
 
@@ -84,7 +83,9 @@ def testing_homepage():
 @app.route("/sms_to_db", methods=['POST'])
 def sms_to_db():
 	"""Adds text data to db, Twilio sends info here when text is initiated"""
-	pass
+	#data = request.form
+
+	return "ok"
 
 @app.route("/resp", methods=['GET', 'POST'])
 def sms_reply():
@@ -114,4 +115,5 @@ def sms_reply():
 
 
 if __name__ == "__main__":
+	#pass
 	app.run(debug=True, host="0.0.0.0")

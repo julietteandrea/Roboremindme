@@ -9,7 +9,7 @@ client = Client(account_sid, auth_token)
 
 message = client.messages \
 				.create(
-					body = "Now, a question of etiquette - as I pass, do I give you the ass or the crotch? ",
+					body = " testing 12",
 					from_= twilio("twilio_num"),
 					to = recipient("recipient_num")
 					)
