@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<!-- Login -->
+<form action="/" method='POST'>
+	<label for="login"><b>Login</b></label><br>
+	<small>Username:</small><br>
+	<input type="text" id="username" name="username">
+	<br>
+	<small>Password:</small><br>
+	<input type="password" id="password" name="password">
+	<br>
+
+<!-- Register -->
+	<label for="register"><b>Register</b></label><br>
+	<small>Enter a username:</small><br>
+	<input type="text" name="new_username" id="new_username">
+	<br>
+	<small>Telephone number to verify account:</small><br>
+	<input type="tel" name="telephone" id="telephone">
+	<br>
+	<small>Password:</small><br>
+	<input type="password" name="pw1" id="pw1" placeholder="Enter password">
+	<br>
+	<input type="password" name="pw2" id="pw2" placeholder="Confirm password">
+	<br>
+	<input type="submit">
+</form>
+{% endblock %}
+
+{% block content %}
+{% endblock %}
