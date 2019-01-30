@@ -16,8 +16,8 @@ class User(db.Model):
 	phone_num = db.Column(db.String(50)) # Needs to verify in order to gain full access
 	password = db.Column(db.String(200), nullable=False)
 
-	# Define relationship to messages
-	messages = db.relationship("")
+	# Define relationship to reminders
+	reminders = db.relationship("")
 
 	def __repr__(self):
 		"""Provide clear representation when printed"""
@@ -28,23 +28,24 @@ class User(db.Model):
 																		self.phone_num,
 																		self.password)
 
-class SmsMessages(db.Model):
-	"""Storage of messages and it's details"""
+class Reminder(db.Model):
+	"""Storage of reminders and it's details"""
 
-	__tablename__ = "messages"
+	__tablename__ = "reminders"
 
 	message_id = db.Column(db.Integer, autoincrement=True, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 	recipent = db.Column(db.String(50), nullable=False)
 	date_created = db.Column(db.String(50), nullable=False) # Current date/time of message created
 	date_sent = db.Column(db.String(50), nullable=False) # date/time of when to send message or when message was sent
-	body = db.Column(db.String(65), nullable=False)
+	body = db.Column(db.String(55), nullable=False) 
 	sid = db.Column(db.String(200))
+	status = db.Column(db.String(10))
 
 	def __repre__(self):
 		"""Provide clear representation when printed"""
 
-		return "<SmsMessages message_id={} user_id={} recipent={} date_created={} date_sent={} body={} sid={}>".format(
+		return "<Reminder message_id={} user_id={} recipent={} date_created={} date_sent={} body={} sid={}>".format(
 																												self.message_id,
 																												self.user_id,
 																												self.recipent,
@@ -53,13 +54,17 @@ class SmsMessages(db.Model):
 																												self.body,
 																												self.sid)
 
+
+
+
+
 ##### Helper Functions #####
 
 def connect_to_db(app):
 	"""Connect the database to our Flask app"""
 
 	# Configure to use our PostgreSQL database
-	app.config['SQLALCHEMY_DATABASE_URI'] = 'postresql:///reminders'
+	app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///reminders'
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 	app.config['SQLALCHEMY_ECHO'] = True
 	db.app = app

@@ -3,18 +3,38 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from datetime import datetime, timedelta
 from config import *; from config2 import *
+#from model import connect_to_db, db, User, Reminder
 
 app = Flask(__name__)
 
 account_sid = account_sid("account_num")
 auth_token = auth_token("token_num")
 
+
+#connect_to_db(app)
 client = Client(account_sid, auth_token)
 
 ########### Functions begin ##############
 
-@app.route("/sms")
+@app.route("/")
 def index():
+	"""Log in/ Register page."""
+	return render_template("mainpage.html")
+
+@app.route("/", methods=["POST"])
+def main_page():
+	if request.form.get("pw1") != request.form.get("pw2"):
+		flash("Passwords didn't match!")
+		return render_template("mainpage.html")
+	else:
+		username = request.form.get("new_username")
+		username = username.lower()
+		telephone = request.form.get("telephone")
+		password = request.form.get("pw1")
+		#CONTINUE HERE
+
+@app.route("/sms")
+def homepage():
 	"""displays homepage"""
 	return render_template("homepage.html")
 
@@ -33,6 +53,7 @@ def testing_homepage():
 	timedate_info = False
 	
 	# if user doesn't check 'send immediately' option
+	# i want to save the reminder in the database with 'pending' status until cron runs and executes to send
 	if sendnow == None:
 		time_date = True
 		time = request.form.get("texttime")
@@ -43,8 +64,8 @@ def testing_homepage():
 		send_date = date + " " + time[0:8]
 		# convert user's local time to utc
 		send_date = convertlocal_utc(send_date, timezone)
-		# Save the message in the db with the time/date(created) and recipent num
-		# Send the message when that time/date matches current t/d
+		# Save the message in the db with the time/date(created), recipent num and status 'pending'
+		# Send the message when that time/date matches current t/d, changing status to 'sent'
 		# Then save the sid
 		message = client.messages \
 				.create(
@@ -57,7 +78,7 @@ def testing_homepage():
 		send_date = datetime.now()
 		message = client.messages \
 				.create(
-					body = "msg",
+					body = msg,
 					from_= twilio("twilio_num"),
 					to = text_num,
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
@@ -81,9 +102,18 @@ def testing_homepage():
 	return redirect("/sms")
 
 @app.route("/sms_to_db", methods=['POST'])
-def sms_to_db():
-	"""Adds text data to db, Twilio sends info here when text is initiated"""
-	#data = request.form
+def reminders_to_db():
+	"""Adds sms data to db, Twilio sends info here when text is initiated"""
+	# Get specific data infor from sms via request.form
+	data = request.form
+	recipent = data["to"]
+	# Have to change datetime format
+	date_created = data["date_created"]
+	date_sent = data["date_sent"] # Date when to send, if date is not right now, status = pending
+	body = data["body"]
+	sid = data["sid"]
+	status = data["status"] # If date sent is now rn, status = pending
+
 
 	return "ok"
 
