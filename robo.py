@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, flash, redirect, session
+from flask import Flask, request, render_template, flash, redirect, session, url_for
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from authy.api import AuthyApiClient
@@ -29,6 +29,12 @@ def login():
 	""" Login"""
 	pass
 
+@app.route("/logout")
+def logout():
+	"""Removes the user from the session and logs them out."""
+	session.pop('username', None)
+	return redirect('/')
+
 @app.route("/register",  methods=["GET","POST"])
 def registration():
 	"""Add new user to database"""
@@ -54,24 +60,83 @@ def registration():
 			db.session.commit()
 			session["username"] = username
 			flash("Last step! You must verify your phone number in order to complete registration.")
-			return 'ok'
+			return redirect("/phone_verification")
 		else:
-			flash("Oh no! Looks like the username '{}' is already taken, please choose a different username".format(username))
+			flash("Oh no! Looks like the username '{}' is already taken, choose a different username".format(username))
 			return render_template("mainpage.html")
 
-@app.route("/phone_verification", methods=["GET", "POST"])
+######### Phone verification for 2F #########
+@app.route("/phone_verification")
+def show_phone_verification():
+	"""Display verification form."""
+	return render_template("phone_verification.html")
+
+
+@app.route("/phone_verification", methods=["POST"])
 def phone_verification():
-	pass
+	"""Grabs input from the form."""
+	country_code = request.form.get("country_code")
+	phone_number = request.form.get("phone_number")
+	method = request.form.get("method")
+
+	# Saves country_code and phone_number to the user's session
+	# for when the user gets redirected to verify
+	session['country_code'] = country_code
+	session['phone_number'] = phone_number
+
+	# Api call
+	api.phones.verification_start(phone_number, country_code, via=method)
+
+	return redirect(url_for("verify"))
+
+
+@app.route("/verify")
+def show_verification():
+	"""Displays validation form."""
+	return render_template("verify.html")	
+
+
+@app.route("/verify", methods=["POST"])
+def verify():
+	"""validates user's input."""
+	token = request.form.get("token")
+
+	# Grabs the user's creds from the session
+	phone_number = session['phone_number']
+	country_code = session['country_code']
+
+	verification = api.phones.verification_check(phone_number, country_code, token)
+
+	if verification.ok():
+		if 'username' in session:
+			username = session['username']
+			user = User.query.filter_by(username=username).first()
+			user.phone_num = phone_number
+			db.session.commit()
+			flash("Welcome to Roboremind me!")
+			return redirect("/sms")
+		else:
+			flash("Something went wrong! Please log in and verify again")
+			return redirect("/")
+
+	else:
+		flash("Wrong verification code")
+		return redirect(url_for("verify"))
+
 
 
 @app.route("/sms")
-def homepage():
+def show_homepage():
 	"""displays homepage"""
+	if 'username' not in session:
+		return redirect('/')
+	
 	return render_template("homepage.html")
 
 # Refactor - Work in Progress...
-@app.route("/sms", methods=["GET", "POST"])
-def testing_homepage():
+@app.route("/sms", methods=["POST"])
+def homepage():
+	"""Displays page to send reminder."""
 	
 	# recipent's phone number
 	text_num = request.form.get("phone")
@@ -135,7 +200,7 @@ def testing_homepage():
 @app.route("/sms_to_db", methods=['POST'])
 def reminders_to_db():
 	"""Adds sms data to db, Twilio sends info here when text is initiated"""
-	# Get specific data infor from sms via request.form
+	# Get specific data info from sms via request.form
 	data = request.form
 	recipent = data["to"]
 	# Have to change datetime format

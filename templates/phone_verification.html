@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block head %}
+	<title> Phone verification</title>
+
+	<link rel="stylesheet" media="all" href="https://cdnjs.cloudflare.com/ajax/libs/authy-form-helpers/2.3/form.authy.min.css" data-turbolinks-tracks="reload" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/authy-form-helpers/2.3/form.authy.min.js" data-turbolinks-track="reload"></script>
+{% endblock %}
+
+{% block content %}
+<!--- Flash messages -->
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<div style="color:black; font-size: 20px">
+		{% for message in messages %}
+  			{{ message }}</div>
+		{% endfor %}
+	{% endif %}
+	{% endwith %}
+	
+    <h1>Verify you phone number to complete registration</h1>
+    	<form action="/phone_verification" accept-charset="UTF-8" method="post">
+        	<div>
+            	<label for="authy-countries">Country code:</label>
+            	<select name="country_code" id="authy-countries" data-show-as="number"></select>
+          	</div>
+          	<div>
+            	<label for="phone_number">Phone number:</label>
+            	<input type="tel" name="phone_number" id="phone_number" /><br>
+            	<p><small>roboremindme will only use this number for security purposes.<br>
+            	Standard text messaging rates may apply.</small></p>
+          	</div>
+          	<div>
+            	<p><b>Receive verification code via:</b></p>
+            	<input type="radio" name="method" id="method_sms" value="sms" />
+            	<label for="method_sms"> Text Message (SMS)</label><br>
+            	<input type="radio" name="method" id="method_call" value="call" />
+            	<label for="method_call"> Automated voice call</label>
+          	</div><br>
+          	<button name="button" type="submit">Get code</button>
+        </form>	
+
+        <p>Verify my phone later</p>
+{% endblock %}

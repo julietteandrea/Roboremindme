@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
 
 {% block head %}
+<!--- Flash messages -->
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<div style="color:black; font-size: 20px">
+		{% for message in messages %}
+  			{{ message }}</div>
+		{% endfor %}
+	{% endif %}
+	{% endwith %}
+	
 <form action="/sms" method="POST">
 		Enter the phone number you would like to send a roboreminder to:
 	<input type="tel" id="phone" name="phone" required><br>
@@ -28,6 +38,8 @@
 	<input type="submit">	
 
 </form>
+<a href="/logout">logout</a>
+
 {% endblock %}
 
 {% block content %}
