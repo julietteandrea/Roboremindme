@@ -1,6 +1,20 @@
 {% extends 'base.html' %}
 
 {% block head %}
+{% endblock %}
+
+{% block content %}
+
+<!--- Flash messages -->
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<div style="color:black; font-size: 20px">
+		{% for message in messages %}
+  			{{ message }}</div>
+		{% endfor %}
+	{% endif %}
+	{% endwith %}
+
 <!-- Login -->
 <form action="/" method='POST'>
 	<label for="login"><b>Login</b></label><br>
@@ -10,8 +24,12 @@
 	<small>Password:</small><br>
 	<input type="password" id="password" name="password">
 	<br>
+	<input type="submit">
+	<br>
+</form>
 
 <!-- Register -->
+<form action="/register" method='POST'>	
 	<label for="register"><b>Register</b></label><br>
 	<small>Enter a username:</small><br>
 	<input type="text" name="new_username" id="new_username">
@@ -26,7 +44,4 @@
 	<br>
 	<input type="submit">
 </form>
-{% endblock %}
-
-{% block content %}
 {% endblock %}

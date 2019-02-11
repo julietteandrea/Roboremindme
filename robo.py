@@ -1,18 +1,21 @@
-from flask import Flask, request, render_template, flash, redirect
+from flask import Flask, request, render_template, flash, redirect, session
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
+from authy.api import AuthyApiClient
 from datetime import datetime, timedelta
-from config import *; from config2 import *
-#from model import connect_to_db, db, User, Reminder
+from config2 import *
+from werkzeug.security import generate_password_hash, check_password_hash
+from model import connect_to_db, db, User, Reminder
 
 app = Flask(__name__)
+app.config.from_object('config')
 
-account_sid = account_sid("account_num")
-auth_token = auth_token("token_num")
-
-
-#connect_to_db(app)
+api = AuthyApiClient(app.config['AUTHY_API_KEY'])
+app.secret_key = app.config['SESSION_SKEY']
+account_sid = app.config['ACCOUNT_NUM']
+auth_token = app.config["TOKEN_NUM"]
 client = Client(account_sid, auth_token)
+connect_to_db(app)
 
 ########### Functions begin ##############
 
@@ -22,7 +25,13 @@ def index():
 	return render_template("mainpage.html")
 
 @app.route("/", methods=["POST"])
-def main_page():
+def login():
+	""" Login"""
+	pass
+
+@app.route("/register",  methods=["GET","POST"])
+def registration():
+	"""Add new user to database"""
 	if request.form.get("pw1") != request.form.get("pw2"):
 		flash("Passwords didn't match!")
 		return render_template("mainpage.html")
@@ -30,8 +39,30 @@ def main_page():
 		username = request.form.get("new_username")
 		username = username.lower()
 		telephone = request.form.get("telephone")
-		password = request.form.get("pw1")
-		#CONTINUE HERE
+		unhashed_pw = request.form.get("pw1")
+
+		# This generates a password hash
+		hashed_pw = generate_password_hash(unhashed_pw, method="sha256")
+		password = hashed_pw
+
+		
+		# This checks if username is already in the db, if it's not, it's added
+		print(username)
+		if User.query.filter_by(username=username).first() is None:
+			new_user = User(username=username, password=password)
+			db.session.add(new_user)
+			db.session.commit()
+			session["username"] = username
+			flash("Last step! You must verify your phone number in order to complete registration.")
+			return 'ok'
+		else:
+			flash("Oh no! Looks like the username '{}' is already taken, please choose a different username".format(username))
+			return render_template("mainpage.html")
+
+@app.route("/phone_verification", methods=["GET", "POST"])
+def phone_verification():
+	pass
+
 
 @app.route("/sms")
 def homepage():
@@ -70,7 +101,7 @@ def testing_homepage():
 		message = client.messages \
 				.create(
 					body = msg,
-					from_= twilio("twilio_num"),
+					from_= app.config["RECIPIENT"],
 					to = text_num,
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
 					)
@@ -79,7 +110,7 @@ def testing_homepage():
 		message = client.messages \
 				.create(
 					body = msg,
-					from_= twilio("twilio_num"),
+					from_= app.config["RECIPIENT"],
 					to = text_num,
 					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
 					)

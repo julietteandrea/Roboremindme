@@ -17,7 +17,7 @@ class User(db.Model):
 	password = db.Column(db.String(200), nullable=False)
 
 	# Define relationship to reminders
-	reminders = db.relationship("")
+	reminders = db.relationship("Reminder", backref="user")
 
 	def __repr__(self):
 		"""Provide clear representation when printed"""
@@ -64,7 +64,7 @@ def connect_to_db(app):
 	"""Connect the database to our Flask app"""
 
 	# Configure to use our PostgreSQL database
-	app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///reminders'
+	app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///smsreminders'
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 	app.config['SQLALCHEMY_ECHO'] = True
 	db.app = app
