@@ -27,7 +27,27 @@ def index():
 @app.route("/", methods=["POST"])
 def login():
 	""" Login"""
-	pass
+	username = request.form.get('username')
+	username = username.lower()
+	unhashed_pw = request.form.get('password')
+	user_cred = User.query.filter_by(username=username).first()
+
+	# If username doesn't exist inside the database
+	if user_cred is None:
+		flash("Username not found! try again or register")
+		return render_template("mainpage.html")
+
+	# Checks to see if password matches password inside the db
+	if check_password_hash(user_cred.password, unhashed_pw):
+		session['username'] = username
+		if user_cred.phone_num is None:
+			flash("Welcome back! You must verify your phone number to complete registration.")
+			return render_template("phone_verification.html")
+		# If registration is complete, user gets full access
+		return render_template("homepage.html")
+	else:
+		flash("Incorrect password, try again!")
+		return render_template("mainpage.html")	
 
 @app.route("/logout")
 def logout():
@@ -130,6 +150,13 @@ def show_homepage():
 	"""displays homepage"""
 	if 'username' not in session:
 		return redirect('/')
+
+	# If user hasn't verified their phone number, redirect to verification page
+	user_cred = User.query.filter_by(username=session['username']).first()
+	if user_cred.phone_num is None:
+		flash("You must verify your phone number to complete registration")
+		return render_template("phone_verification.html")
+
 	
 	return render_template("homepage.html")
 
@@ -166,18 +193,21 @@ def homepage():
 		message = client.messages \
 				.create(
 					body = msg,
-					from_= app.config["RECIPIENT"],
+					from_= app.config["TWILIO_SMSNUM"],
 					to = text_num,
-					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
+					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db",
+					#Status= "sent"
 					)
 	else:
 		send_date = datetime.now()
 		message = client.messages \
 				.create(
 					body = msg,
-					from_= app.config["RECIPIENT"],
+					from_= app.config["TWILIO_SMSNUM"],
 					to = text_num,
-					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db"
+					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db",
+					#Status= "sent",
+					#status_callback_method= "POST"
 					)
 
 	# save to, time created, time sent, message, sid insiide the database.
@@ -202,13 +232,23 @@ def reminders_to_db():
 	"""Adds sms data to db, Twilio sends info here when text is initiated"""
 	# Get specific data info from sms via request.form
 	data = request.form
-	recipent = data["to"]
+	print("data = {}".format(data))
+	recipient = data["to"]
 	# Have to change datetime format
 	date_created = data["date_created"]
 	date_sent = data["date_sent"] # Date when to send, if date is not right now, status = pending
 	body = data["body"]
 	sid = data["sid"]
 	status = data["status"] # If date sent is now rn, status = pending
+
+	user = User.query.filter_by(username=session['username']).all()
+	userid = user[0].user_id
+	if userid > 0:
+		new_reminder = Reminder(user_id=userid, recipent=recipient, date_created=date_created,
+								date_sent=date_sent, body=body, sid=sid, status=status)
+		db.session.add(new_reminder)
+		db.session.commit()
+		print(new_reminder)
 
 
 	return "ok"
