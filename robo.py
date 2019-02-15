@@ -17,6 +17,10 @@ auth_token = app.config["TOKEN_NUM"]
 client = Client(account_sid, auth_token)
 connect_to_db(app)
 
+# temp Global variable
+MSG = []
+USERNAME = []
+
 ########### Functions begin ##############
 
 @app.route("/")
@@ -85,6 +89,7 @@ def registration():
 			flash("Oh no! Looks like the username '{}' is already taken, choose a different username".format(username))
 			return render_template("mainpage.html")
 
+
 ######### Phone verification for 2F #########
 @app.route("/phone_verification")
 def show_phone_verification():
@@ -100,7 +105,7 @@ def phone_verification():
 	method = request.form.get("method")
 
 	# Saves country_code and phone_number to the user's session
-	# for when the user gets redirected to verify
+	# for when the user gets redirected to /verify
 	session['country_code'] = country_code
 	session['phone_number'] = phone_number
 
@@ -144,6 +149,7 @@ def verify():
 		return redirect(url_for("verify"))
 
 
+######## Homepage/Profile and reminders #######
 
 @app.route("/sms")
 def show_homepage():
@@ -163,20 +169,21 @@ def show_homepage():
 # Refactor - Work in Progress...
 @app.route("/sms", methods=["POST"])
 def homepage():
-	"""Displays page to send reminder."""
+	"""Retrieves form data to send/save reminders"""
+	global MSG
+	global USERNAME
 	
 	# recipent's phone number
 	text_num = request.form.get("phone")
 	
-	# message sent to recipent
+	# message to send recipent
 	msg = request.form.get("reminder")
 	# send immediately option
 	sendnow = request.form.get("textrn")
 	# temp flag to print needed info
 	timedate_info = False
 	
-	# if user doesn't check 'send immediately' option
-	# i want to save the reminder in the database with 'pending' status until cron runs and executes to send
+	# If user doesn't check 'send immediately' option
 	if sendnow == None:
 		time_date = True
 		time = request.form.get("texttime")
@@ -187,27 +194,34 @@ def homepage():
 		send_date = date + " " + time[0:8]
 		# convert user's local time to utc
 		send_date = convertlocal_utc(send_date, timezone)
-		# Save the message in the db with the time/date(created), recipent num and status 'pending'
-		# Send the message when that time/date matches current t/d, changing status to 'sent'
+		
+		# TODO: send sms when saved time/date matches current t/d, changing status to 'sent'
 		# Then save the sid
-		message = client.messages \
-				.create(
-					body = msg,
-					from_= app.config["TWILIO_SMSNUM"],
-					to = text_num,
-					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db",
-					#Status= "sent"
-					)
+
+		# assign var for db
+		recipient = text_num
+		date_created = datetime.now()
+		status = 'pending'
+		
+		# Save reminder to db to be sent later
+		user = User.query.filter_by(username=session['username']).all()
+		userid = user[0].user_id
+		if userid > 0:
+			new_reminder = Reminder(user_id=userid, recipent=recipient, date_created=date_created,
+								date_sent=send_date, body=msg, status=status)
+			db.session.add(new_reminder)
+			db.session.commit()
+			print(new_reminder)
 	else:
+		MSG = msg
+		USERNAME = session['username']
 		send_date = datetime.now()
 		message = client.messages \
 				.create(
-					body = msg,
+					body = MSG,
 					from_= app.config["TWILIO_SMSNUM"],
 					to = text_num,
-					status_callback = "http://www.roboremindme.ngrok.io/sms_to_db",
-					#Status= "sent",
-					#status_callback_method= "POST"
+					status_callback = "http://roboremindme.ngrok.io/sms_to_db"
 					)
 
 	# save to, time created, time sent, message, sid insiide the database.
@@ -219,39 +233,40 @@ def homepage():
 		print("message created(now it's current date) = {}".format(datetime.now()))
 		print("message sent date = {}".format(send_date))
 		print("message body = {}".format(message.body))
-	print("message sid = {}".format(message.sid))
-	print("message recipent = {}".format(message.to))
-	print("message created(now it's current date) = {}".format(datetime.now()))
-	print("message sent date = {}".format(send_date))
-	print("message body = {}".format(message.body))
 
 	return redirect("/sms")
 
 @app.route("/sms_to_db", methods=['POST'])
 def reminders_to_db():
-	"""Adds sms data to db, Twilio sends info here when text is initiated"""
+	"""Adds sms data to db (sms that were sent right away),
+	 Twilio sends info here when text is initiated"""
+	
 	# Get specific data info from sms via request.form
-	data = request.form
-	print("data = {}".format(data))
-	recipient = data["to"]
-	# Have to change datetime format
-	date_created = data["date_created"]
-	date_sent = data["date_sent"] # Date when to send, if date is not right now, status = pending
-	body = data["body"]
-	sid = data["sid"]
-	status = data["status"] # If date sent is now rn, status = pending
+	data = dict(request.form)
 
-	user = User.query.filter_by(username=session['username']).all()
-	userid = user[0].user_id
-	if userid > 0:
-		new_reminder = Reminder(user_id=userid, recipent=recipient, date_created=date_created,
-								date_sent=date_sent, body=body, sid=sid, status=status)
-		db.session.add(new_reminder)
-		db.session.commit()
-		print(new_reminder)
+	# Assign var for db
+	recipient = data["To"][0]
+	date_created = datetime.now()
+	body = MSG
+	sid = data["SmsSid"][0]
+	status = data["SmsStatus"][0]
 
+	if status == 'delivered':
+		# Saves sms data into db
+		user = User.query.filter_by(username=USERNAME).all()
+		userid = user[0].user_id
+		if userid > 0:
+			new_reminder = Reminder(user_id=userid, recipent=recipient, date_created=date_created,
+								date_sent=date_created, body=body, sid=sid, status=status)
+		
+			db.session.add(new_reminder)
+			db.session.commit()
+			print(new_reminder)
 
-	return "ok"
+		
+	else:
+		flash("Message failed! try again")
+		return redirect("/sms")
 
 @app.route("/resp", methods=['GET', 'POST'])
 def sms_reply():
