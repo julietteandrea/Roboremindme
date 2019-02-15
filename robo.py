@@ -236,6 +236,7 @@ def homepage():
 
 	return redirect("/sms")
 
+
 @app.route("/sms_to_db", methods=['POST'])
 def reminders_to_db():
 	"""Adds sms data to db (sms that were sent right away),
@@ -265,8 +266,22 @@ def reminders_to_db():
 
 		
 	else:
-		flash("Message failed! try again")
+		flash("Reminder delivery failed! try again")
 		return redirect("/sms")
+
+
+@app.route("/scheduled_to_db")
+def scheduledsms_to_db():
+	"""Send scheduled reminders to client"""
+	pass
+
+
+def reminders_to_db2():
+	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
+	pass
+
+
+####### Chatbot #######
 
 @app.route("/resp", methods=['GET', 'POST'])
 def sms_reply():
