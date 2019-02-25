@@ -17,9 +17,10 @@ auth_token = app.config["TOKEN_NUM"]
 client = Client(account_sid, auth_token)
 connect_to_db(app)
 
-# temp Global variable
+# temp Global variable (for twilio to communicate w db and vice versa)
 MSG = []
 USERNAME = []
+REMINDERID = []
 
 ########### Functions begin ##############
 
@@ -271,24 +272,62 @@ def reminders_to_db():
 		return redirect("/sms")
 
 
-@app.route("/scheduled_to_db")
-def scheduledsms_to_db():
+def send_scheduled_reminders():
 	"""Send scheduled reminders to client"""
+	#global REMINDERID
+
 	#PSUEDO: 
-	#every minute
-	#check db for 'pending' status
-	#if date_sent on 'pending' is equal or less than current time
-	#send message to client via twilio
+	#run this function every minute
+	#check db for 'pending' status w/all()
+	
+	#a list of records with 'pending'
+	#status = Reminder.query.filter_by(status='pending').all()
+	
+	#for i in range(len(status)):
+		#if date_sent on 'pending' is equal or less(before) than current time
+    	#if status[i].date_created <= current time:
+			
+			#retrieve recipent and body
+			#recipient = status[i].recipent
+			#msg = status[i].body
+
+			#data to send to scheduled_reminders_to_db2
+			#reminder_id = status[i].message_id
+			#REMINDERID = reminder_id
+			
+			#send message to client via twilio
+			#messages = client.messages \
+				#create(
+					#body=msg,
+					#from=app.config['TWILIO_SMSNUM']
+					#to=recipent,
+					#status_callback='http://roboremind.ngrok.io/modifysms_db'
+					#)
+	
 	#check 'reminders_to_db2'
+
 	pass
 
-
-def reminders_to_db2():
+@app.route("/modifysms_db")
+def scheduled_reminders_to_db2():
 	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
+	#Consider session issues***
 	#PSUEDO:
 	#grab data from just sent reminder
-	#overwrite status from 'pending' to 'delivered'
-	#add sid number
+	#data = dict(request.form)
+	#new_status = data['SmsStatus'][0]
+	#sid = data["SmsSid"][0]
+
+	#overwrite status of message_id (that matches) from 'pending' to 'delivered'
+	#if status == 'delivered':
+		#update  = Reminder.query.filter_by(message_id=REMINDERID).first()
+		#update.status = new_status
+		
+		#and add sid number
+		#update.sid = sid
+
+		#db.session.commit()
+	
 	pass
 
 
