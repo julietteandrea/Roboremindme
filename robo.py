@@ -224,6 +224,7 @@ def homepage():
 					status_callback = "http://roboremindme.ngrok.io/sms_to_db"
 					)
 
+
 	# save to, time created, time sent, message, sid insiide the database.
 	if timedate_info == True:
 		print("time = {}".format(time))
@@ -273,11 +274,21 @@ def reminders_to_db():
 @app.route("/scheduled_to_db")
 def scheduledsms_to_db():
 	"""Send scheduled reminders to client"""
+	#PSUEDO: 
+	#every minute
+	#check db for 'pending' status
+	#if date_sent on 'pending' is equal or less than current time
+	#send message to client via twilio
+	#check 'reminders_to_db2'
 	pass
 
 
 def reminders_to_db2():
 	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
+	#PSUEDO:
+	#grab data from just sent reminder
+	#overwrite status from 'pending' to 'delivered'
+	#add sid number
 	pass
 
 
