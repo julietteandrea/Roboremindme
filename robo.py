@@ -17,21 +17,25 @@ auth_token = app.config["TOKEN_NUM"]
 client = Client(account_sid, auth_token)
 connect_to_db(app)
 
-# temp Global variable (for twilio to communicate w db and vice versa)
+# Temp Global variable (for twilio to communicate w db and vice versa)
 MSG = []
 USERNAME = []
-REMINDERID = []
+
 
 ########### Functions begin ##############
 
+
 @app.route("/")
 def index():
-	"""Log in/ Register page."""
+	"""Log in/ Registration page."""
+	
 	return render_template("mainpage.html")
+
 
 @app.route("/", methods=["POST"])
 def login():
 	""" Login"""
+	
 	username = request.form.get('username')
 	username = username.lower()
 	unhashed_pw = request.form.get('password')
@@ -48,21 +52,26 @@ def login():
 		if user_cred.phone_num is None:
 			flash("Welcome back! You must verify your phone number to complete registration.")
 			return render_template("phone_verification.html")
+		
 		# If registration is complete, user gets full access
 		return render_template("homepage.html")
 	else:
 		flash("Incorrect password, try again!")
 		return render_template("mainpage.html")	
 
+
 @app.route("/logout")
 def logout():
 	"""Removes the user from the session and logs them out."""
+
 	session.pop('username', None)
 	return redirect('/')
 
+
 @app.route("/register",  methods=["GET","POST"])
 def registration():
-	"""Add new user to database"""
+	"""Adds new user to database"""
+	
 	if request.form.get("pw1") != request.form.get("pw2"):
 		flash("Passwords didn't match!")
 		return render_template("mainpage.html")
@@ -76,9 +85,7 @@ def registration():
 		hashed_pw = generate_password_hash(unhashed_pw, method="sha256")
 		password = hashed_pw
 
-		
 		# This checks if username is already in the db, if it's not, it's added
-		print(username)
 		if User.query.filter_by(username=username).first() is None:
 			new_user = User(username=username, password=password)
 			db.session.add(new_user)
@@ -92,15 +99,19 @@ def registration():
 
 
 ######### Phone verification for 2F #########
+
+
 @app.route("/phone_verification")
 def show_phone_verification():
-	"""Display verification form."""
+	"""Displays verification form."""
+	
 	return render_template("phone_verification.html")
 
 
 @app.route("/phone_verification", methods=["POST"])
 def phone_verification():
 	"""Grabs input from the form."""
+	
 	country_code = request.form.get("country_code")
 	phone_number = request.form.get("phone_number")
 	method = request.form.get("method")
@@ -119,12 +130,14 @@ def phone_verification():
 @app.route("/verify")
 def show_verification():
 	"""Displays validation form."""
+	
 	return render_template("verify.html")	
 
 
 @app.route("/verify", methods=["POST"])
 def verify():
-	"""validates user's input."""
+	""" Validates user's input."""
+	
 	token = request.form.get("token")
 
 	# Grabs the user's creds from the session
@@ -152,6 +165,7 @@ def verify():
 
 ######## Homepage/Profile and reminders #######
 
+
 @app.route("/sms")
 def show_homepage():
 	"""displays homepage"""
@@ -164,40 +178,35 @@ def show_homepage():
 		flash("You must verify your phone number to complete registration")
 		return render_template("phone_verification.html")
 
-	
 	return render_template("homepage.html")
 
-# Refactor - Work in Progress...
+
 @app.route("/sms", methods=["POST"])
 def homepage():
 	"""Retrieves form data to send/save reminders"""
 	global MSG
 	global USERNAME
 	
-	# recipent's phone number
+	# Recipient's phone number
 	text_num = request.form.get("phone")
 	
-	# message to send recipent
+	# Message to send recipient
 	msg = request.form.get("reminder")
-	# send immediately option
+	# Send immediately option
 	sendnow = request.form.get("textrn")
-	# temp flag to print needed info
-	timedate_info = False
 	
-	# If user doesn't check 'send immediately' option
+	# If user doesn't checkbox 'send immediately' option
 	if sendnow == None:
-		time_date = True
 		time = request.form.get("texttime")
 		date = request.form.get("textdate")
 		timezone = request.form.get("timezone")
-		# seconds are added to time, for better formatting
+		
+		# Seconds are added to time, for better formatting
 		time = time + ':00'
 		send_date = date + " " + time[0:8]
-		# convert user's local time to utc
-		send_date = convertlocal_utc(send_date, timezone)
 		
-		# TODO: send sms when saved time/date matches current t/d, changing status to 'sent'
-		# Then save the sid
+		# Convert user's local time to utc
+		send_date = convertlocal_utc(send_date, timezone)
 
 		# assign var for db
 		recipient = text_num
@@ -212,7 +221,6 @@ def homepage():
 								date_sent=send_date, body=msg, status=status)
 			db.session.add(new_reminder)
 			db.session.commit()
-			print(new_reminder)
 	else:
 		MSG = msg
 		USERNAME = session['username']
@@ -225,16 +233,6 @@ def homepage():
 					status_callback = "http://roboremindme.ngrok.io/sms_to_db"
 					)
 
-
-	# save to, time created, time sent, message, sid insiide the database.
-	if timedate_info == True:
-		print("time = {}".format(time))
-		print("date = {}".format(date))
-		print("message sid = {}".format(message.sid))
-		print("message recipent = {}".format(message.to))
-		print("message created(now it's current date) = {}".format(datetime.now()))
-		print("message sent date = {}".format(send_date))
-		print("message body = {}".format(message.body))
 
 	return redirect("/sms")
 
@@ -271,60 +269,10 @@ def reminders_to_db():
 		flash("Reminder delivery failed! try again")
 		return redirect("/sms")
 
+
 ########### Scheduled reminders ###############
-#allan notes
-#for i, status_element in enumerate(status):
-#play around with sql alchemy in jupyter
-#perhaps the below statement 
-#status = Reminder.query.filter_by(status='pending').all()
-#can be something like
-#status = Reminder.query.filter_by(status='pending',date_sent=less_than(datetime.now())).all()
-#so that status already comes back from db ready to go
-#let the DB do as much work as possible, saves you time
-################################################
-
-	
-def send_scheduled_reminders():
-	"""Send scheduled reminders to client"""
-
-	#PSUEDO: 
-	#run this function every minute
-	#check db for reminders with 'pending' status 
-	
-	#a list of records with 'pending'
-	#TODO - potential performance increase by having the
-	#database filter on date_sent < datetime.now()
-	#instead of us doing it in the method
-	status = Reminder.query.filter_by(status='pending').all()
 	
 
-	for i in range(len(status)):
-		# DB saves the date as a str. Below is converting the str into a date
-		date_to_send = datetime.strptime(status[i].date_sent, '%Y-%m-%d %H:%M:%S')
-		# If date_to_send on 'pending' is equal or less(before) than current time
-		if date_to_send <= datetime.now():
-			
-			#retrieve recipent and body
-			recipient = status[i].recipent
-			msg = status[i].body
-
-			#data to send to scheduled_reminders_to_db2
-			reminder_id = status[i].message_id
-			
-			#send message to client via twilio
-			messages = client.messages \
-					 .create(
-						body=msg,
-						from_=app.config['TWILIO_SMSNUM'],
-						to=recipient,
-						status_callback='http://roboremindme.ngrok.io/modifysms_db/{}'.format(reminder_id)
-							)
-
-#send_scheduled_reminders()
-	
-	#pass
-
-#Consider: what if two reminders are scheduled for the exact same time?
 @app.route("/modifysms_db/<reminder_id>",methods=["POST"])
 def scheduled_reminders_to_db2(reminder_id):
 	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
@@ -332,23 +280,20 @@ def scheduled_reminders_to_db2(reminder_id):
 	#to test from command line: curl APP_URL/modifysms_db/1
 	#to test from jupyter: requests.post_json(APP_URL/modifysms_db/1, json={"test":1})
 	#PSUEDO:
-	#grab data from just sent reminder
+	# Get specific data info from reminder that was just sent
 	data = dict(request.form)
 	new_status = data['SmsStatus'][0]
 	sid = data["SmsSid"][0]
 
-	#overwrite status of message_id (that matches) from 'pending' to 'delivered'
+	# Overwrite status of message_id from 'pending' to 'delivered'
 	if new_status == 'delivered':
 		update  = Reminder.query.filter_by(message_id=reminder_id).first()
 		update.status = new_status
 		
-		#and add sid number
+		# Add sid number
 		update.sid = sid
 
 		db.session.commit()
-	
-	#pass
-
 
 ####### Chatbot #######
 
@@ -371,11 +316,12 @@ def sms_reply():
 	elif "picture" in body:
 		pic = resp.message("Here's my contact picture. Save it under Roboremindme!")
 		pic.media("https://c1.staticflickr.com/5/4894/31633985757_1886a7bb04_b.jpg")
+	elif "thanks" in body or "thank you" in body:
+		resp.message("My pleasure!")
 	else:
 		resp.message("Roboremindme is here to remind you to get things done.")
 
 	
-
 	return str(resp)
 
 
