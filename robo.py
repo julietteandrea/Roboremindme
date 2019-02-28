@@ -271,9 +271,8 @@ def reminders_to_db():
 		flash("Reminder delivery failed! try again")
 		return redirect("/sms")
 
-
+########### Scheduled reminders ###############
 #allan notes
-#REMINDERID not a great name for a list of items, perhaps REMINDER_IDS?
 #for i, status_element in enumerate(status):
 #play around with sql alchemy in jupyter
 #perhaps the below statement 
@@ -282,12 +281,11 @@ def reminders_to_db():
 #status = Reminder.query.filter_by(status='pending',date_sent=less_than(datetime.now())).all()
 #so that status already comes back from db ready to go
 #let the DB do as much work as possible, saves you time
-
+################################################
 
 	
 def send_scheduled_reminders():
 	"""Send scheduled reminders to client"""
-	#global REMINDERID
 
 	#PSUEDO: 
 	#run this function every minute
@@ -297,59 +295,59 @@ def send_scheduled_reminders():
 	#TODO - potential performance increase by having the
 	#database filter on date_sent < datetime.now()
 	#instead of us doing it in the method
-	#status = Reminder.query.filter_by(status='pending').all()
+	status = Reminder.query.filter_by(status='pending').all()
 	
 
-	#for i in range(len(status)):
-		#if date_sent on 'pending' is equal or less(before) than current time
-    	#if status[i].date_sent <= datetime.now():
+	for i in range(len(status)):
+		# DB saves the date as a str. Below is converting the str into a date
+		date_to_send = datetime.strptime(status[i].date_sent, '%Y-%m-%d %H:%M:%S')
+		# If date_to_send on 'pending' is equal or less(before) than current time
+		if date_to_send <= datetime.now():
 			
 			#retrieve recipent and body
-			#recipient = status[i].recipent
-			#msg = status[i].body
+			recipient = status[i].recipent
+			msg = status[i].body
 
 			#data to send to scheduled_reminders_to_db2
-			#reminder_id = status[i].message_id
-			#REMINDERID = reminder_id
+			reminder_id = status[i].message_id
 			
 			#send message to client via twilio
-			#messages = client.messages.create(\
-					#body=msg,
-					#from=app.config['TWILIO_SMSNUM']
-					#to=recipent,
-					#status_callback='http://roboremind.ngrok.io/modifysms_db/{}'.format(reminder_id)
-					#)
-	
-	#check 'reminders_to_db2'
+			messages = client.messages \
+					 .create(
+						body=msg,
+						from_=app.config['TWILIO_SMSNUM'],
+						to=recipient,
+						status_callback='http://roboremindme.ngrok.io/modifysms_db/{}'.format(reminder_id)
+							)
 
-	pass
+#send_scheduled_reminders()
+	
+	#pass
 
 #Consider: what if two reminders are scheduled for the exact same time?
 @app.route("/modifysms_db/<reminder_id>",methods=["POST"])
 def scheduled_reminders_to_db2(reminder_id):
 	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
-	#Consider: session issues***
-	print("reminder_id = {}".format(reminder_id))
 
 	#to test from command line: curl APP_URL/modifysms_db/1
 	#to test from jupyter: requests.post_json(APP_URL/modifysms_db/1, json={"test":1})
 	#PSUEDO:
 	#grab data from just sent reminder
-	#data = dict(request.form)
-	#new_status = data['SmsStatus'][0]
-	#sid = data["SmsSid"][0]
+	data = dict(request.form)
+	new_status = data['SmsStatus'][0]
+	sid = data["SmsSid"][0]
 
 	#overwrite status of message_id (that matches) from 'pending' to 'delivered'
-	#if new_status == 'delivered':
-		#update  = Reminder.query.filter_by(message_id=REMINDERID).first()
-		#update.status = new_status
+	if new_status == 'delivered':
+		update  = Reminder.query.filter_by(message_id=reminder_id).first()
+		update.status = new_status
 		
 		#and add sid number
-		#update.sid = sid
+		update.sid = sid
 
-		#db.session.commit()
+		db.session.commit()
 	
-	pass
+	#pass
 
 
 ####### Chatbot #######
