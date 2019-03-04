@@ -13,7 +13,7 @@
 	
 <form action="/sms" method="POST">
 		Enter the phone number you would like to send a roboreminder to:
-	<input type="tel" id="phone" name="phone" required><br>
+	<input type="text" id="phone" name="phone" placeholder="123-456-7890" required><br>
 	<br>
 	Enter the time and date when to send the roboreminder:<br>
 	If right away, check the box:
@@ -40,6 +40,7 @@
 </form>
 <a href="/logout">logout</a>
 
+<script src="static/js/homepage.js"></script>
 {% endblock %}
 
 {% block content %}

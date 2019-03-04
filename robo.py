@@ -3,7 +3,7 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from authy.api import AuthyApiClient
 from datetime import datetime, timedelta
-from config2 import *
+from config2 import * ; from scheduled import *
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import connect_to_db, db, User, Reminder
 
@@ -27,14 +27,14 @@ USERNAME = []
 
 @app.route("/")
 def index():
-	"""Log in/ Registration page."""
+	"""Log in/ Registration page"""
 	
 	return render_template("mainpage.html")
 
 
 @app.route("/", methods=["POST"])
 def login():
-	""" Login"""
+	"""Login"""
 	
 	username = request.form.get('username')
 	username = username.lower()
@@ -62,7 +62,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-	"""Removes the user from the session and logs them out."""
+	"""Removes the user from the session and logs them out"""
 
 	session.pop('username', None)
 	return redirect('/')
@@ -103,21 +103,21 @@ def registration():
 
 @app.route("/phone_verification")
 def show_phone_verification():
-	"""Displays verification form."""
+	"""Displays verification form"""
 	
 	return render_template("phone_verification.html")
 
 
 @app.route("/phone_verification", methods=["POST"])
 def phone_verification():
-	"""Grabs input from the form."""
+	"""Grabs input from the form"""
 	
 	country_code = request.form.get("country_code")
 	phone_number = request.form.get("phone_number")
 	method = request.form.get("method")
 
 	# Saves country_code and phone_number to the user's session
-	# for when the user gets redirected to /verify
+	# for when the user gets redirected to "/verify"
 	session['country_code'] = country_code
 	session['phone_number'] = phone_number
 
@@ -129,14 +129,14 @@ def phone_verification():
 
 @app.route("/verify")
 def show_verification():
-	"""Displays validation form."""
+	"""Displays validation form"""
 	
 	return render_template("verify.html")	
 
 
 @app.route("/verify", methods=["POST"])
 def verify():
-	""" Validates user's input."""
+	"""Validates user's input"""
 	
 	token = request.form.get("token")
 
@@ -168,7 +168,8 @@ def verify():
 
 @app.route("/sms")
 def show_homepage():
-	"""displays homepage"""
+	"""Displays homepage"""
+	
 	if 'username' not in session:
 		return redirect('/')
 
@@ -184,6 +185,7 @@ def show_homepage():
 @app.route("/sms", methods=["POST"])
 def homepage():
 	"""Retrieves form data to send/save reminders"""
+	
 	global MSG
 	global USERNAME
 	
@@ -275,11 +277,11 @@ def reminders_to_db():
 
 @app.route("/modifysms_db/<reminder_id>",methods=["POST"])
 def scheduled_reminders_to_db2(reminder_id):
-	""" Adds sms data to db (sms that were scheduled to send at a later time)"""
+	"""Adds sms data to db (sms that were scheduled to send at a later time)"""
 
 	#to test from command line: curl APP_URL/modifysms_db/1
 	#to test from jupyter: requests.post_json(APP_URL/modifysms_db/1, json={"test":1})
-	#PSUEDO:
+	
 	# Get specific data info from reminder that was just sent
 	data = dict(request.form)
 	new_status = data['SmsStatus'][0]
@@ -299,14 +301,14 @@ def scheduled_reminders_to_db2(reminder_id):
 
 @app.route("/resp", methods=['GET', 'POST'])
 def sms_reply():
-	"""Send a dynamic reply to an incoming text message."""
+	"""Send a dynamic reply to an incoming text message"""
+	
 	# Get the message the user sent our app number
 	body = request.values.get('Body', None)
 
 	# Start our TwiML response
 	resp = MessagingResponse()
 	
-
 	# Determine the right reply for this message
 	body = body.lower()
 	if body == "hello" or body == "hi":

@@ -4,7 +4,7 @@ from robo import *
 
 def send_scheduled_reminders():
 	"""Sends scheduled reminders to client by checking
-	the database for reminders with 'pending' status."""
+	the database for reminders with 'pending' status"""
 	
 	# A list of records with 'pending' status
 	status = Reminder.query.filter_by(status='pending').all()
